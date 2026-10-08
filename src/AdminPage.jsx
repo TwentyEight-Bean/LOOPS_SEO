@@ -1064,16 +1064,8 @@ export default function AdminPage() {
                     return (
                       <div
                         key={idx}
-                        style={{
-                          background: 'rgba(15, 18, 23, 0.6)',
-                          border: isCustom ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--admin-border)',
-                          borderRadius: '12px',
-                          padding: '18px',
-                          display: 'grid',
-                          gridTemplateColumns: '140px 1fr 40px',
-                          gap: '18px',
-                          alignItems: 'center',
-                        }}
+                        className="admin-concept-item-card"
+                        style={isCustom ? { borderColor: 'rgba(16, 185, 129, 0.4)' } : undefined}
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
                           {conceptIsVideo ? (
@@ -1201,7 +1193,7 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        <div>
+                        <div className="admin-concept-item-del">
                           <button
                             type="button"
                             className="admin-btn-icon"
