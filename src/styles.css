@@ -592,11 +592,13 @@ html.dark .mobile-nav-toggle {
 .mobile-nav-drawer-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% 20%, rgba(15, 23, 42, 0.72) 0%, rgba(3, 7, 18, 0.86) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(8, 12, 20, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 998;
-  animation: liquidOverlayFade 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: liquidOverlayFade 240ms ease-out forwards;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Liquid Glass Chamber (The Drawer) */
@@ -616,78 +618,70 @@ html.dark .mobile-nav-toggle {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  isolation: isolate;
   overflow-x: hidden;
   box-sizing: border-box;
 
-  /* Liquid Glass Physics */
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(245, 245, 240, 0.65) 100%);
-  backdrop-filter: blur(50px) saturate(220%) brightness(1.08);
-  -webkit-backdrop-filter: blur(50px) saturate(220%) brightness(1.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  /* Liquid Glass Physics - stable & GPU optimized */
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 245, 240, 0.76) 100%);
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.05);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 32px 84px -10px rgba(9, 20, 29, 0.28),
+    0 24px 64px -10px rgba(9, 20, 29, 0.28),
     inset 0 1.5px 2px rgba(255, 255, 255, 0.95),
     inset 0 -1.5px 2px rgba(0, 0, 0, 0.05),
-    0 0 45px rgba(49, 140, 255, 0.12);
-  animation: liquidDrawerEnter 340ms cubic-bezier(0.16, 1, 0.3, 1);
+    0 0 35px rgba(49, 140, 255, 0.1);
+  animation: liquidDrawerEnter 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .site-nav.is-dark ~ .mobile-nav-drawer,
 html.dark .mobile-nav-drawer {
-  background: linear-gradient(145deg, rgba(26, 32, 46, 0.75) 0%, rgba(14, 18, 28, 0.85) 100%);
-  backdrop-filter: blur(50px) saturate(220%) brightness(1.05);
-  -webkit-backdrop-filter: blur(50px) saturate(220%) brightness(1.05);
-  border: 1.5px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(145deg, rgba(24, 30, 44, 0.88) 0%, rgba(12, 16, 26, 0.92) 100%);
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.05);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   color: #f4f3ee;
   box-shadow:
-    0 36px 90px -10px rgba(0, 0, 0, 0.85),
-    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45),
+    0 28px 72px -10px rgba(0, 0, 0, 0.85),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.4),
     inset 0 -1px 2px rgba(0, 0, 0, 0.5),
-    0 0 50px rgba(49, 140, 255, 0.18);
+    0 0 40px rgba(49, 140, 255, 0.15);
 }
 
-/* Ambient Floating Liquid Orbs (Prismatic refraction behind glass) */
+/* Ambient Floating Liquid Orbs (Optimized soft gradient glows without heavy runtime blur) */
 .liquid-glass-ambient-orb {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(42px);
   opacity: 0.65;
   z-index: -1;
-  animation: liquidOrbFloat 8s infinite alternate ease-in-out;
 }
 
 .liquid-orb-1 {
   top: -40px;
   left: -20px;
-  width: 190px;
-  height: 190px;
-  background: radial-gradient(circle, #318cff 0%, rgba(49, 140, 255, 0.1) 70%, transparent 100%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(49, 140, 255, 0.35) 0%, rgba(49, 140, 255, 0.08) 50%, transparent 75%);
 }
 
 .liquid-orb-2 {
   bottom: 20px;
   right: -30px;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, #dfa85b 0%, rgba(223, 168, 91, 0.1) 70%, transparent 100%);
-  animation-delay: -4s;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(223, 168, 91, 0.3) 0%, rgba(223, 168, 91, 0.06) 55%, transparent 75%);
 }
 
 .liquid-orb-3 {
   top: 42%;
   left: 25%;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%);
-  animation-delay: -2s;
-}
-
-@keyframes liquidOrbFloat {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(15px, 20px) scale(1.12); }
-  100% { transform: translate(-10px, -15px) scale(0.95); }
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 70%);
 }
 
 /* Liquid Header Bar inside drawer */
@@ -733,13 +727,8 @@ html.dark .mobile-nav-drawer .liquid-glass-badge {
   height: 7px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: liquidDotPulse 2s infinite ease-in-out;
-}
-
-@keyframes liquidDotPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.75);
+  display: inline-block;
 }
 
 .mobile-nav-close-btn {
@@ -1084,22 +1073,20 @@ html.dark .mobile-nav-drawer .dock-theme-toggle {
   color: #dfa85b;
 }
 
-/* Animations */
+/* Animations - GPU accelerated & flicker-free */
 @keyframes liquidOverlayFade {
-  from { opacity: 0; backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(24px); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes liquidDrawerEnter {
   0% {
     opacity: 0;
-    transform: translateY(-20px) scale(0.93);
-    filter: blur(14px);
+    transform: translateY(-12px) scale(0.97);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0px);
   }
 }
 
@@ -1120,6 +1107,11 @@ html.dark .mobile-nav-drawer .dock-theme-toggle {
   .mobile-nav-toggle { display: inline-flex !important; }
   .nav-cta { min-height: 40px; padding: 0 13px; font-size: 11px; }
 
+  .hero-video {
+    inset: 10svh 0 auto;
+    height: 80svh;
+    object-position: center 48%;
+  }
   .hero-glass { backdrop-filter: blur(3px) saturate(.96) brightness(1.02); }
   .hero-interface { padding-top: 88px; padding-bottom: 24px; }
   .hero-title { max-width: 100%; font-size: clamp(38px, 11.5vw, 62px); line-height: .86; word-break: break-word; }
@@ -1217,6 +1209,7 @@ html.dark .mobile-nav-drawer .dock-theme-toggle {
 }
 
 @media (max-width: 480px) {
+  .hero-video { inset-block-start: 11svh; height: 78svh; }
   .problem-system { grid-template-columns: 1fr !important; }
   .problem-tag { min-height: 44px; font-size: 11.5px; padding: 0 14px; }
   .offer-bridge h2 { font-size: clamp(38px, 12vw, 54px) !important; }

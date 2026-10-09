@@ -75,9 +75,6 @@ export function useLoopsMotion() {
       gsap.set([support, cta], { opacity: 0, y: 14 });
       gsap.set(scrollCue, { opacity: 0, y: 10 });
       gsap.set([glass, highlight], { opacity: 0 });
-      gsap.set([solveHeading, solveNote, serviceIndex], { opacity: 0 });
-      gsap.set(solveCards, { opacity: 0 });
-
       const restoreHeroReadyState = () => {
         hero.classList.remove('is-revealing');
         hero.classList.add('is-ready');
@@ -119,18 +116,18 @@ export function useLoopsMotion() {
           });
 
           exit
-            .to(support, { opacity: 0, y: -14, duration: .3 }, .2)
-            .to(cta, { opacity: 0, y: 16, duration: .28 }, .22)
-            .to(scrollCue, { opacity: 0, duration: .2 }, .2)
-            .to(lines[0], { opacity: 0, xPercent: -5, yPercent: -45, filter: 'blur(7px)', clipPath: 'inset(0 0 100% 0)', duration: .28 }, .35)
-            .to(lines[1], { opacity: 0, xPercent: 4, yPercent: -40, filter: 'blur(8px)', clipPath: 'inset(0 0 100% 0)', duration: .28 }, .43)
-            .to(lines[2], { opacity: 0, xPercent: -4, yPercent: -38, filter: 'blur(7px)', clipPath: 'inset(0 0 100% 0)', duration: .26 }, .52)
-            .to(video, { scale: 1.075, opacity: .08, filter: 'saturate(.74) brightness(1.1) blur(3px)', duration: .42 }, .55)
-            .to(highlight, { opacity: .15, duration: .38 }, .56)
-            .to(glass, { opacity: 1, backgroundColor: 'rgba(244, 243, 238, 0.92)', duration: .42 }, .55)
-            .to(lines[3], { opacity: 0, xPercent: 3, yPercent: -34, filter: 'blur(9px)', clipPath: 'inset(0 0 100% 0)', duration: .26 }, .7)
-            .to('.hero-interface', { opacity: 0, duration: .05 }, .95)
-            .to(hero, { backgroundColor: '#f4f3ee', duration: .15 }, .85);
+            .to(support, { opacity: 0, y: -14, duration: .24 }, .28)
+            .to(cta, { opacity: 0, y: 16, duration: .22 }, .3)
+            .to(scrollCue, { opacity: 0, duration: .18 }, .32)
+            .to(lines[0], { opacity: 0, xPercent: -5, yPercent: -45, filter: 'blur(7px)', clipPath: 'inset(0 0 100% 0)', duration: .2 }, .58)
+            .to(lines[1], { opacity: 0, xPercent: 4, yPercent: -40, filter: 'blur(8px)', clipPath: 'inset(0 0 100% 0)', duration: .2 }, .64)
+            .to(lines[2], { opacity: 0, xPercent: -4, yPercent: -38, filter: 'blur(7px)', clipPath: 'inset(0 0 100% 0)', duration: .18 }, .71)
+            .to(lines[3], { opacity: 0, xPercent: 3, yPercent: -34, filter: 'blur(9px)', clipPath: 'inset(0 0 100% 0)', duration: .18 }, .78)
+            .to(video, { scale: 1.055, opacity: .18, filter: 'saturate(.8) brightness(1.08) blur(2px)', duration: .22 }, .78)
+            .to(highlight, { opacity: .18, duration: .2 }, .8)
+            .to(glass, { opacity: 1, backgroundColor: 'rgba(244, 243, 238, 0.72)', duration: .22 }, .8)
+            .to('.hero-interface', { opacity: 0, duration: .04 }, .97)
+            .to(hero, { backgroundColor: '#f4f3ee', duration: .08 }, .92);
         });
 
         heroMedia.add('(max-width: 760px)', () => {
@@ -161,58 +158,65 @@ export function useLoopsMotion() {
             .to('.hero-interface', { opacity: 0, duration: .06 }, .94);
         });
 
-        heroMedia.add('(min-width: 761px)', () => {
-          const solve = gsap.timeline({
-            scrollTrigger: {
-              trigger: '.solve-stage',
-              start: 'top top',
-              end: '+=115%',
-              pin: true,
-              pinSpacing: true,
-              scrub: 1,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            },
+        if (solveHeading && solveCards.length && serviceIndex && solveNote) {
+          heroMedia.add('(min-width: 761px)', () => {
+            const solveIntro = gsap.timeline({
+              scrollTrigger: {
+                trigger: '.solve-stage',
+                start: 'top 82%',
+                end: 'top -8%',
+                scrub: 1.25,
+                invalidateOnRefresh: true,
+              },
+            });
+
+            solveIntro
+              .fromTo(solveCards,
+                {
+                  opacity: 0,
+                  x: (index) => [-150, 135, -90, 120, -70][index],
+                  y: (index) => [75, -55, 90, -70, 55][index],
+                  rotate: (index) => [-12, 10, -7, 9, -10][index],
+                  immediateRender: false,
+                },
+                {
+                  opacity: 1,
+                  x: 0,
+                  y: 0,
+                  rotate: (index, target) => {
+                    const className = target.className || '';
+                    if (className.includes('problem-tag-1')) return -6;
+                    if (className.includes('problem-tag-2')) return 7;
+                    if (className.includes('problem-tag-3')) return -3;
+                    if (className.includes('problem-tag-4')) return 5;
+                    return -7;
+                  },
+                  stagger: .09,
+                  ease: 'none',
+                },
+                0,
+              );
           });
 
-          solve
-            .fromTo(solveHeading,
-              { opacity: 0, y: 30 },
-              { opacity: 1, y: 0, duration: .28, ease: 'power3.out' },
-              .06,
-            )
-            .fromTo(solveCards,
+          heroMedia.add('(max-width: 760px)', () => {
+            gsap.fromTo(solveCards,
+              { opacity: 0, y: 24, immediateRender: false },
               {
-                opacity: 0,
-                x: (index) => [-150, 135, -90, 120, -70][index],
-                y: (index) => [75, -55, 90, -70, 55][index],
-                rotate: (index) => [-14, 12, -8, 11, -12][index],
+                opacity: 1,
+                y: 0,
+                stagger: .08,
+                duration: .95,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: '.solve-stage',
+                  start: 'top 82%',
+                  toggleActions: 'play none none reverse',
+                },
               },
-              { opacity: 1, x: 0, y: 0, rotate: 0, stagger: .025, duration: .34 },
-              .2,
-            )
-            .fromTo(serviceIndex, { opacity: 0, y: 42 }, { opacity: 1, y: 0, duration: .3 }, .42)
-            .fromTo(solveNote, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .2 }, .72);
-        });
+            );
+          });
+        }
 
-        heroMedia.add('(max-width: 760px)', () => {
-          gsap.timeline({
-            scrollTrigger: {
-              trigger: '.solve-stage',
-              start: 'top top',
-              end: '+=70%',
-              pin: true,
-              pinSpacing: true,
-              scrub: .7,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            },
-          })
-            .fromTo(solveHeading, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .22 }, .05)
-            .fromTo(solveCards, { opacity: 0, y: 24 }, { opacity: 1, y: 0, stagger: .025, duration: .34 }, .22)
-            .fromTo(serviceIndex, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: .28 }, .48)
-            .fromTo(solveNote, { opacity: 0 }, { opacity: 1, duration: .18 }, .75);
-        });
       };
 
       // Create pin spacers before the intro finishes so late video reveal cannot reflow the page.

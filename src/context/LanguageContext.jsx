@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { saveToDB, getFromDB, clearDB } from './dbStorage';
 
 const DB_CONTENT_KEY = 'loops_site_content_v1';
+const DEPLOY_CONTENT_URL = '/loops-site-content.json';
 
 const LanguageContext = createContext(null);
 
@@ -257,6 +258,39 @@ const defaultTranslations = {
   },
 };
 
+function mergeSiteContent(...contents) {
+  const merged = {
+    vi: defaultTranslations.vi,
+    en: defaultTranslations.en,
+    media: defaultMedia,
+    mediaMeta: {},
+  };
+
+  contents.forEach((content) => {
+    if (!content) return;
+    merged.vi = { ...merged.vi, ...content.vi };
+    merged.en = { ...merged.en, ...content.en };
+    merged.media = { ...merged.media, ...content.media };
+    merged.mediaMeta = { ...merged.mediaMeta, ...(content.mediaMeta || {}) };
+  });
+
+  return merged;
+}
+
+async function getDeployContentSeed() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const response = await fetch(DEPLOY_CONTENT_URL, { cache: 'no-store' });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) return null;
+    const parsed = await response.json();
+    return parsed && (parsed.vi || parsed.en || parsed.media) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export const STANDARD_MEDIA_MAP = {
   heroVideo: { standardPath: '/assets/hero-loops.mp4', standardName: 'hero-loops.mp4', type: 'video' },
   heroPoster: { standardPath: '/assets/projects/project-01.jpg', standardName: 'hero-poster.jpg', type: 'image' },
@@ -296,23 +330,19 @@ export function LanguageProvider({ children }) {
   const [lastSaved, setLastSaved] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load from IndexedDB on initial mount
+  // Load deploy seed first, then local browser edits if they exist.
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       try {
+        const deploySeed = await getDeployContentSeed();
         const savedData = await getFromDB(DB_CONTENT_KEY);
-        if (savedData && isMounted) {
-          setSiteContent({
-            vi: { ...defaultTranslations.vi, ...savedData.vi },
-            en: { ...defaultTranslations.en, ...savedData.en },
-            media: { ...defaultMedia, ...savedData.media },
-            mediaMeta: savedData.mediaMeta || {},
-          });
+        if ((deploySeed || savedData) && isMounted) {
+          setSiteContent(mergeSiteContent(deploySeed, savedData));
           setLastSaved(new Date().toLocaleTimeString('vi-VN'));
         }
       } catch (err) {
-        console.warn('Error loading from IndexedDB:', err);
+        console.warn('Error loading CMS content:', err);
       } finally {
         if (isMounted) setIsLoaded(true);
       }
@@ -654,12 +684,7 @@ export function LanguageProvider({ children }) {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed && (parsed.vi || parsed.en || parsed.media)) {
-        const merged = {
-          vi: { ...defaultTranslations.vi, ...parsed.vi },
-          en: { ...defaultTranslations.en, ...parsed.en },
-          media: { ...defaultMedia, ...parsed.media },
-          mediaMeta: parsed.mediaMeta || {},
-        };
+        const merged = mergeSiteContent(parsed);
         await saveContentToStorage(merged);
         return { success: true };
       }

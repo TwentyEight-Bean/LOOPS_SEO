@@ -579,6 +579,7 @@ export default function AdminPage() {
                     <li><strong>Chỉnh sửa ngôn ngữ:</strong> Chọn tab <code>Tiếng Việt</code> hoặc <code>English</code> ở thanh menu trên cùng để tùy biến nội dung theo từng ngôn ngữ.</li>
                     <li><strong>Thay đổi hình ảnh / video:</strong> Vào từng section hoặc vào mục <code>Thư viện Media</code>, bạn có thể dán đường dẫn URL hoặc bấm <code>Tải tệp lên</code> từ máy tính.</li>
                     <li><strong>Lưu tự động (Auto-save):</strong> Mọi thay đổi được tự động ghi nhớ vào trình duyệt ngay lập tức.</li>
+                    <li><strong>Đưa thay đổi lên deploy:</strong> Dữ liệu admin đang nằm trong trình duyệt. Muốn Vercel/hosting dùng cùng nội dung, hãy <code>Xuất JSON</code>, đổi tên file thành <code>loops-site-content.json</code>, đặt vào thư mục <code>public</code> rồi deploy lại.</li>
                     <li><strong>Sao lưu dữ liệu:</strong> Sử dụng nút <code>Xuất JSON</code> để lưu file cấu hình dự phòng và <code>Nhập JSON</code> khi muốn đồng bộ giữa các máy.</li>
                   </ul>
                 </div>
