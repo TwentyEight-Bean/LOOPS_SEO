@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export const REVEAL_BEFORE_END = 1.2;
+export const REVEAL_BEFORE_END = 0.2;
 
 export function useLoopsMotion() {
   useEffect(() => {
@@ -226,9 +226,14 @@ export function useLoopsMotion() {
         if (revealStarted || disposed) return;
         revealStarted = true;
 
+        // When intro concludes or skipped, enable continuous loop for ambient background
+        video.loop = true;
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+
         if (skip) {
           window.__navAlreadyRevealed = true;
-          video.play().catch(() => {});
           hero.classList.add('is-ready');
           gsap.set(nav, { opacity: 1, y: 0, filter: 'none' });
           gsap.set(glass, { opacity: 1 });
@@ -289,26 +294,56 @@ export function useLoopsMotion() {
 
       const handleMetadata = () => {
         if (Number.isFinite(video.duration) && video.duration > 0) {
-          video.play().catch(() => beginReveal());
+          video.play().catch(() => {
+            // If browser blocks autoplay on mobile without user interaction, wait or reveal on touch
+          });
           requestAnimationFrame(() => ScrollTrigger.refresh());
         }
       };
 
       const handleTimeUpdate = () => {
-        if (!Number.isFinite(video.duration)) return;
-        if (video.duration - video.currentTime <= REVEAL_BEFORE_END) beginReveal();
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+        // Let the video play completely to the end
+        if (video.duration - video.currentTime <= REVEAL_BEFORE_END) {
+          beginReveal();
+        }
       };
-      const handleVideoFinished = () => beginReveal();
+
+      const handleVideoFinished = () => {
+        beginReveal();
+      };
+
+      // Long fallback safety: ONLY if video genuinely failed to load or play after 8s
+      const fallbackTimer = setTimeout(() => {
+        if (!revealStarted && !disposed && (video.paused || video.readyState === 0)) {
+          beginReveal(true);
+        }
+      }, 8000);
 
       video.addEventListener('loadedmetadata', handleMetadata);
       video.addEventListener('timeupdate', handleTimeUpdate);
       video.addEventListener('ended', handleVideoFinished);
       video.addEventListener('error', handleVideoFinished);
+
+      // Resume video on first user interaction if blocked by mobile browser policy
+      const handleGlobalInteraction = () => {
+        if (video && video.paused && !revealStarted) {
+          video.play().catch(() => {});
+        }
+        window.removeEventListener('touchstart', handleGlobalInteraction);
+        window.removeEventListener('click', handleGlobalInteraction);
+      };
+      window.addEventListener('touchstart', handleGlobalInteraction, { passive: true });
+      window.addEventListener('click', handleGlobalInteraction, { passive: true });
+
       removeVideoListeners = () => {
+        clearTimeout(fallbackTimer);
         video.removeEventListener('loadedmetadata', handleMetadata);
         video.removeEventListener('timeupdate', handleTimeUpdate);
         video.removeEventListener('ended', handleVideoFinished);
         video.removeEventListener('error', handleVideoFinished);
+        window.removeEventListener('touchstart', handleGlobalInteraction);
+        window.removeEventListener('click', handleGlobalInteraction);
       };
       if (video.readyState >= 1) handleMetadata();
       document.fonts?.ready.then(() => {

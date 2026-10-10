@@ -61,6 +61,8 @@ function Hero() {
         autoPlay
         muted
         playsInline
+        webkit-playsinline="true"
+        x5-playsinline="true"
         preload="auto"
       />
       <div className="hero-glass" aria-hidden="true" />

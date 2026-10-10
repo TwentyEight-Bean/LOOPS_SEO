@@ -35,6 +35,32 @@ const isVideoMedia = (src = '', fileType = '') => {
   );
 };
 
+export const PROJECT_MEDIA_PRESETS = [
+  { label: '🎬 LOOPS Brand Motion Film (Bản phim thương hiệu LOOPS)', value: '/assets/hero-brand-motion.mp4', type: 'video' },
+  { label: '🎬 Design System Motion Visual (Thiết kế hệ thống giao diện)', value: '/assets/hero-design-system.mp4', type: 'video' },
+  { label: '🎬 Creative Motion Visual (Bản sáng tạo trực quan)', value: '/assets/hero-creative-motion.mp4', type: 'video' },
+  { label: '🎬 Vòng O Xanh Quả Táo (Hero ban đầu)', value: '/assets/hero-loops.mp4', type: 'video' },
+  { label: '🎬 Video Bảng Giá 2 (Offers chính)', value: '/assets/video-price-2.mp4', type: 'video' },
+  { label: '🎬 Video Bảng Giá 1 (Offers phụ)', value: '/assets/video-price-1.mp4', type: 'video' },
+  { label: '🎬 Vật thể lỏng xoay 3D', value: '/assets/liquid-rotate.mp4', type: 'video' },
+  { label: '🎬 Chuyển động xoay không nền', value: '/assets/rotating-object.mp4', type: 'video' },
+  { label: '🎬 Xoáy nước lỏng', value: '/assets/water-vortex.mp4', type: 'video' },
+  { label: '🎬 Hiệu ứng nền trong suốt', value: '/assets/transparent-fx.mp4', type: 'video' },
+  { label: '🎬 Liquid Loop (Signals chuyển động)', value: '/assets/liquid-loop.mp4', type: 'video' },
+  { label: '🎬 Vòng O 1 (O_1)', value: '/assets/o-1.mp4', type: 'video' },
+  { label: '🎬 Vòng O 2 (O_2)', value: '/assets/o-2.mp4', type: 'video' },
+  { label: '🖼️ Concept 01 - F&B Brand Identity', value: '/assets/projects/project-01.jpg', type: 'image' },
+  { label: '🖼️ Concept 02 - Future Tech Platform', value: '/assets/projects/project-02.jpg', type: 'image' },
+  { label: '🖼️ Concept 03 - Lifestyle Content System', value: '/assets/projects/project-03.jpg', type: 'image' },
+  { label: '🖼️ Concept 04 - Creative Campaign Experiment', value: '/assets/projects/project-04.jpg', type: 'image' },
+  { label: '🖼️ Concept 05 - Modern Coffee Shop Interior', value: '/assets/projects/project-05.jpg', type: 'image' },
+  { label: '🖼️ Concept 06 - Minimalist Landscape Panel', value: '/assets/projects/project-06.jpg', type: 'image' },
+  { label: '🖼️ Concept 07 - Digital Interface Interaction', value: '/assets/projects/project-07.jpg', type: 'image' },
+  { label: '🖼️ Concept 08 - Interactive Digital Canvas', value: '/assets/projects/project-08.jpg', type: 'image' },
+  { label: '🖼️ Vòng O Thủy Tinh Xanh (liquid-o.png)', value: '/assets/liquid-o.png', type: 'image' },
+  { label: '🖼️ Mặt Nước Lỏng (liquid-surface.jpg)', value: '/assets/liquid-surface.jpg', type: 'image' },
+];
+
 export default function AdminPage() {
   const {
     language: globalLang,
@@ -131,14 +157,43 @@ export default function AdminPage() {
         if (uploadTarget.type === 'concept') {
           const idx = uploadTarget.index;
           const num = String(idx + 1).padStart(2, '0');
-          const standardPath = `/assets/projects/project-${num}.${file.type.startsWith('video/') ? 'mp4' : 'jpg'}`;
+          const isVideo = file.type.startsWith('video/');
+          const filename = `project-${num}.${isVideo ? 'mp4' : 'jpg'}`;
+          const standardPath = `/assets/projects/${filename}`;
+          try {
+            await fetch('/api/upload-media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename,
+                base64Data: dataUrl,
+                subDir: 'assets/projects',
+              }),
+            });
+          } catch {
+            // graceful fallback
+          }
           uploadConceptMedia(idx, dataUrl, meta);
           setUploadingState('');
-          showToast(`✅ Đã tải ảnh lên và chuẩn hóa thành ${standardPath} (${sizeMb} MB)`);
+          showToast(`✅ Đã lưu tệp vào ổ đĩa: ${standardPath} (${sizeMb} MB)`);
         } else if (uploadTarget.type === 'standard') {
+          const standardFilename = uploadTarget.standardPath.split('/').pop();
+          try {
+            await fetch('/api/upload-media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename: standardFilename,
+                base64Data: dataUrl,
+                subDir: 'assets',
+              }),
+            });
+          } catch {
+            // graceful fallback
+          }
           uploadStandardMedia(uploadTarget.key, uploadTarget.standardPath, dataUrl, meta);
           setUploadingState('');
-          showToast(`✅ Đã tải lên và chuẩn hóa thành ${uploadTarget.standardPath} (${sizeMb} MB)`);
+          showToast(`✅ Đã lưu tệp vào ổ đĩa: ${uploadTarget.standardPath} (${sizeMb} MB)`);
         }
       }
     };
@@ -212,16 +267,46 @@ export default function AdminPage() {
             <small className="admin-media-help">
               Preview bên trái là nội dung landing page sẽ dùng. Bạn có thể dán URL vào ô dưới hoặc bấm upload để lưu file vào trình duyệt.
             </small>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="text"
-                className="admin-input"
-                value={currentValue}
-                onChange={(e) => handleMediaChange(standardKey, e.target.value)}
-                placeholder={standardPath}
-                title="Đường dẫn tệp chuẩn hóa trong hệ thống"
-                style={{ background: 'rgba(255,255,255,0.03)', color: '#93c5fd', fontWeight: 600 }}
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <select
+                className="admin-select"
+                value={PROJECT_MEDIA_PRESETS.some((p) => p.value === currentValue) ? currentValue : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleMediaChange(standardKey, e.target.value);
+                  }
+                }}
+                style={{
+                  background: 'rgba(30, 41, 59, 0.9)',
+                  color: '#93c5fd',
+                  border: '1px solid rgba(148, 163, 184, 0.35)',
+                  borderRadius: '6px',
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  fontWeight: 650,
+                  width: '100%',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">⚡ Chọn nhanh từ thư viện file có sẵn ({PROJECT_MEDIA_PRESETS.filter((p) => fileType === 'media' || p.type === fileType).length} tệp)...</option>
+                {PROJECT_MEDIA_PRESETS.filter((p) => fileType === 'media' || p.type === fileType).map((preset) => (
+                  <option key={preset.value} value={preset.value}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={currentValue}
+                  onChange={(e) => handleMediaChange(standardKey, e.target.value)}
+                  placeholder={standardPath}
+                  title="Đường dẫn tệp chuẩn hóa trong hệ thống"
+                  style={{ background: 'rgba(255,255,255,0.03)', color: '#93c5fd', fontWeight: 600 }}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -278,10 +363,10 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `loops-landing-config-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = 'loops-site-content.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Đã xuất file cấu hình JSON!');
+    showToast('✅ Đã xuất file loops-site-content.json! Đặt file này vào thư mục public/ để đồng bộ cho mọi máy tính/điện thoại.');
   };
 
   const handleImportSubmit = async () => {
@@ -1163,33 +1248,70 @@ export default function AdminPage() {
                               )}
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                              <input
-                                type="text"
-                                className="admin-input"
-                                value={concept.image || standardPath}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <select
+                                className="admin-select"
+                                value={PROJECT_MEDIA_PRESETS.some((p) => p.value === concept.image) ? concept.image : ''}
                                 onChange={(e) => {
-                                  const updated = { ...concept, image: e.target.value };
-                                  updateListItem(editLang, 'works', 'concepts', idx, updated);
-                                  showToast('Đã lưu đường dẫn!');
+                                  if (e.target.value) {
+                                    const isVideo = isVideoMedia(e.target.value);
+                                    const updated = {
+                                      ...concept,
+                                      image: e.target.value,
+                                      mediaType: isVideo ? 'video' : 'image',
+                                    };
+                                    updateListItem(editLang, 'works', 'concepts', idx, updated);
+                                    showToast('Đã chọn file từ thư viện!');
+                                  }
                                 }}
-                                style={{ background: 'rgba(255,255,255,0.03)', color: '#93c5fd', fontWeight: 600 }}
-                              />
-                              {isCustom && (
-                                <button
-                                  type="button"
-                                  className="admin-file-upload-btn"
-                                  style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)', whiteSpace: 'nowrap' }}
-                                  onClick={() => {
-                                    resetConceptMedia(idx);
-                                    showToast(`Đã khôi phục Concept #${idx + 1} về ảnh gốc!`);
+                                style={{
+                                  background: 'rgba(30, 41, 59, 0.9)',
+                                  color: '#93c5fd',
+                                  border: '1px solid rgba(148, 163, 184, 0.35)',
+                                  borderRadius: '6px',
+                                  padding: '7px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: 650,
+                                  width: '100%',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <option value="">⚡ Chọn nhanh từ thư viện file có sẵn ({PROJECT_MEDIA_PRESETS.length} tệp)...</option>
+                                {PROJECT_MEDIA_PRESETS.map((preset) => (
+                                  <option key={preset.value} value={preset.value}>
+                                    {preset.label}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <input
+                                  type="text"
+                                  className="admin-input"
+                                  value={concept.image || standardPath}
+                                  onChange={(e) => {
+                                    const updated = { ...concept, image: e.target.value };
+                                    updateListItem(editLang, 'works', 'concepts', idx, updated);
+                                    showToast('Đã lưu đường dẫn!');
                                   }}
-                                  title="Khôi phục ảnh mẫu gốc ban đầu"
-                                >
-                                  <RotateCcw size={13} />
-                                  <span>Dùng ảnh gốc</span>
-                                </button>
-                              )}
+                                  style={{ background: 'rgba(255,255,255,0.03)', color: '#93c5fd', fontWeight: 600, flex: 1 }}
+                                />
+                                {isCustom && (
+                                  <button
+                                    type="button"
+                                    className="admin-file-upload-btn"
+                                    style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)', whiteSpace: 'nowrap' }}
+                                    onClick={() => {
+                                      resetConceptMedia(idx);
+                                      showToast(`Đã khôi phục Concept #${idx + 1} về ảnh gốc!`);
+                                    }}
+                                    title="Khôi phục ảnh mẫu gốc ban đầu"
+                                  >
+                                    <RotateCcw size={13} />
+                                    <span>Dùng ảnh gốc</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>

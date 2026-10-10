@@ -7,9 +7,9 @@ const DEPLOY_CONTENT_URL = '/loops-site-content.json';
 const LanguageContext = createContext(null);
 
 const defaultMedia = {
-  heroVideo: '/assets/hero-loops.mp4',
+  heroVideo: '/assets/hero-brand-motion.mp4',
   heroPoster: '/assets/projects/project-01.jpg',
-  offersVideo: '', // Empty means fallback to imported bundle
+  offersVideo: '/assets/video-price-2.mp4',
   liquidSurface: '/assets/liquid-surface.jpg',
   liquidLoop: '/assets/liquid-loop.mp4',
   liquidO: '/assets/liquid-o.png',
@@ -129,7 +129,7 @@ const defaultTranslations = {
     finalCta: {
       sectionLabel: 'Vòng lặp tiếp theo',
       line1: 'BẮT ĐẦU',
-      line2: 'NG.',
+      line2: 'VÒNG LẶP.',
       bottomText: 'Cùng xây dựng điều có ý nghĩa.',
       button: 'Bắt đầu dự án',
       buttonLink: 'https://www.loops.vn/bao-gia',
@@ -292,7 +292,7 @@ async function getDeployContentSeed() {
 }
 
 export const STANDARD_MEDIA_MAP = {
-  heroVideo: { standardPath: '/assets/hero-loops.mp4', standardName: 'hero-loops.mp4', type: 'video' },
+  heroVideo: { standardPath: '/assets/hero-brand-motion.mp4', standardName: 'hero-brand-motion.mp4', type: 'video' },
   heroPoster: { standardPath: '/assets/projects/project-01.jpg', standardName: 'hero-poster.jpg', type: 'image' },
   offersVideo: { standardPath: '/assets/video-price-2.mp4', standardName: 'video-price-2.mp4', type: 'video' },
   liquidSurface: { standardPath: '/assets/liquid-surface.jpg', standardName: 'liquid-surface.jpg', type: 'image' },
@@ -338,8 +338,17 @@ export function LanguageProvider({ children }) {
         const deploySeed = await getDeployContentSeed();
         const savedData = await getFromDB(DB_CONTENT_KEY);
         if ((deploySeed || savedData) && isMounted) {
-          setSiteContent(mergeSiteContent(deploySeed, savedData));
+          const merged = mergeSiteContent(deploySeed, savedData);
+          setSiteContent(merged);
           setLastSaved(new Date().toLocaleTimeString('vi-VN'));
+          // Auto-sync customized data to disk via dev server so all devices see it
+          if (savedData && Object.keys(savedData).length > 0) {
+            fetch('/api/save-content', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(merged),
+            }).catch(() => {});
+          }
         }
       } catch (err) {
         console.warn('Error loading CMS content:', err);
@@ -353,16 +362,25 @@ export function LanguageProvider({ children }) {
     };
   }, []);
 
-  // Save to IndexedDB persistently
+  // Save to IndexedDB persistently + Sync to disk via dev server
   const saveContentToStorage = useCallback(async (newContent) => {
     setSiteContent(newContent);
     setIsSaving(true);
     try {
       await saveToDB(DB_CONTENT_KEY, newContent);
+      try {
+        await fetch('/api/save-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newContent),
+        });
+      } catch {
+        // Fallback gracefully in pure static environment
+      }
       const timeStr = new Date().toLocaleTimeString('vi-VN');
       setLastSaved(timeStr);
     } catch (err) {
-      console.error('Failed to save to IndexedDB:', err);
+      console.error('Failed to save content:', err);
     } finally {
       setIsSaving(false);
     }
@@ -649,6 +667,15 @@ export function LanguageProvider({ children }) {
     setIsSaving(true);
     try {
       await saveToDB(DB_CONTENT_KEY, siteContent);
+      try {
+        await fetch('/api/save-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(siteContent),
+        });
+      } catch {
+        // static fallback
+      }
       const timeStr = new Date().toLocaleTimeString('vi-VN');
       setLastSaved(timeStr);
       return { success: true, time: timeStr };
